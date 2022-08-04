@@ -11,8 +11,20 @@ const db =admin.firestore();
 app.use(express.text())
  
 
+
+
+
+
+// Create a reference to the cities collection
+
+
+
+// Create a query against the collection
+
+
 //---------------Dados recebidos do ESP ---------------------------------------------------
- let idesp = "nada";
+ let idesp = "";
+ 
 //--------------------------------------------------------------------------------------------
 
 //---------------Dados time e data-------------------------------------------------------------
@@ -32,6 +44,8 @@ const dataesp = {
   hora_mes: 0,
   anopasta: data.getFullYear()
 };
+
+
 
  //---------Função Calcula hora da semana e hora do mês-------------------------------------------
  async function calc_hshm(){
@@ -85,11 +99,35 @@ const dataesp = {
   })  
 }
 //----------------------------------------------------------------------------------------------------------------------------
+  
 
-app.post('/data',(req,res)=>{
+ 
 
- idesp = req.body;
- console.log(idesp);
+
+
+//--------------------------POST ---------------------------------------------
+app.post('/data',async (req,res)=>{
+
+ let idbody = req.body;
+ console.log(idbody);
+ //idbody = 'VITOR602'
+ const usersRef = db.collection('users');
+ const queryRef = await usersRef.where('idcard', '==', idbody).get();
+
+ if (queryRef.empty) {
+  console.log("Não existe o id" + idbody); 
+  res.end("IDinv");
+  return;
+}
+
+queryRef.forEach(doc => {
+  idesp = doc.id
+  console.log(idesp + "acho pora")
+});
+
+
+ console.log(idesp + "depois do achar id");
+ 
  //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -136,36 +174,17 @@ db.collection('users').doc(idesp).get().then(async function(doc){
   });
   }
 
-  else{ // SE NÃO EXISTE O ID , INFORMA ID INVALIDO -----
-
-    console.log("Não existe o id" + idesp); 
-    res.end("IDinv");
-  }
 });
 
 //*///------------------------------------------------------------------------------------------
 
 })
 
-
-/*
-const infouser = {
-  nome : 'VITOR A F DE Lima',
-  cpf: '07521202988',
-  meta: 30,
-  sexo: 'masculino',
-  curso:'Engenharia elétrica',
-  email:'vitor@gmail.com'
-};
-
-
-const infopessoa = db.collection('users').doc(idesp).set(infouser);
-*/
-
-
 app.get('/',(req,res)=>{
 
 res.send('<h1> JOSE</h1>');
+
+
 
 
 })
