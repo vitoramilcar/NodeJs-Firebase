@@ -152,7 +152,7 @@ db.collection('users').doc(idesp).get().then(async function(doc){
     };
 
       await db.collection('users').doc(idesp).collection(mesesp).doc(diames).set(dataesp);
-
+      calc_hshm();  // função para calcular hora da semana, hora do mês;
       console.log(idesp +"criando a pasta")
 
       res.end("HI: " + dadosUsers.nome);
