@@ -3,6 +3,8 @@ const app = express();
 const admin = require("firebase-admin");  
 const credentials = require("./key.json"); 
 
+
+const port = process.env.PORT || 3000
 admin.initializeApp({
 credential:admin.credential.cert(credentials)
 });
@@ -35,7 +37,7 @@ let idesp = "";
   
   for(i=(diasemana);i>=0; i--){
 
-    let auxdmes = (anomes+diames) - i;
+    let auxdmes = anomes+(diames - i);
     
     
     await db.collection('users').doc(idesp).collection(mesesp).doc(auxdmes.toString()).get().then(function(doc){
@@ -46,19 +48,11 @@ let idesp = "";
 
         sumhs = dadosaux.hora_dia + sumhs;
         console.log(auxdmes + "primeiro for");
-        
-
       }
-
-    })
-    
+    }) 
   }
-
   for(i=diames;i>=0; i--){
-
-    let auxdmes = anomes+diames - i;
-    
-     
+    let auxdmes = anomes+(diames - i);    
     await db.collection('users').doc(idesp).collection(mesesp).doc(auxdmes.toString()).get().then(function(doc){
 
       const dadosaux =doc.data();
@@ -71,17 +65,13 @@ let idesp = "";
 
         sumhm = dadosaux.hora_dia + sumhm;
         console.log(auxdmes);
-
       }
-    })
-    
+    }) 
   }
-  
   await db.collection('users').doc(idesp).collection(mesesp).doc(anomes+diames).update({  //update dos dados no banco de dados
     hora_semana : sumhs,
     hora_mes: sumhm,
-    ultimodia:true
-    
+    ultimodia:true 
   })  
 }
 //----------------------------------------------------------------------------------------------------------------------------
@@ -119,25 +109,34 @@ db.collection('users').doc(idesp).get().then(async function(doc){
 
   let dadosUsers = doc.data();
 
-  if(doc.exists && dadosUsers.hora_chegada !==0){ 
 
-    console.log("existe o id " + idesp);
     
     
-    
-//----verifica se existe a coleção do dia pro primeiro registro, se existir atualiza o segundo registro
+//----verifica se existe o primeiro registro, se existir atualiza o segundo registro
    await db.collection('users').doc(idesp).collection(mesesp).doc(anomes+diames).get().then( async function(doc){
 
     let dadosdia = doc.data();   // Dados do dia do Usuario.
+    let somahoradia;
+    if(doc.exists ){
+    
+     somahoradia = dadosdia.hora_dia;
+    }
+    else{
 
-    if(doc.exists && dadosdia.hora_chegada !== 0 ){   // se o documento existir , vai atualizar o segundo horario e chamar a funcão de calculo de horas
+      somahoradia = 0;
+
+    }
+    if(doc.exists && (dadosdia.hora_chegada !== 0 && dadosdia.hora_saida === null )){   // se o documento existir , vai atualizar o segundo horario e chamar a funcão de calculo de horas
+      
+      
+
       
       console.log("existe a pasta  e o ano" + anomes+diames);
-      
+      somahoradia = Date.now() - dadosdia.hora_chegada.toDate() + somahoradia;
       
       await db.collection('users').doc(idesp).collection(mesesp).doc(anomes+diames).update({  //update dos dados no banco de dados
         hora_saida: new Date(),
-        hora_dia:  Date.now() - dadosdia.hora_chegada.toDate()  //subtrai a hora de chegada e a de saida e guarda na variavel hora_dia
+        hora_dia:  somahoradia  //subtrai a hora de chegada e a de saida e guarda na variavel hora_dia
       })  
       
       calc_hshm();  // função para calcular hora da semana, hora do mês;
@@ -155,7 +154,7 @@ db.collection('users').doc(idesp).get().then(async function(doc){
 //-------------------------Dados para o Banco de Dados----------------------------------------
       const dataesp = {
       hora_chegada:new Date(),
-      hora_dia: 0,
+      hora_dia: somahoradia,
       hora_saida: null,
       dia_semana: diasemana,
       hora_semana : 0,
@@ -167,7 +166,8 @@ db.collection('users').doc(idesp).get().then(async function(doc){
       nomec:dadosUsers.nome+" "+dadosUsers.sobrenome,
       meta:dadosUsers.meta,
       cpf:dadosUsers.cpf,
-      equipe:dadosUsers.equipe
+      equipe:dadosUsers.equipe,
+      date: new Date()
     };
 
       await db.collection('users').doc(idesp).collection(mesesp).doc(anomes+diames).set(dataesp);
@@ -178,13 +178,29 @@ db.collection('users').doc(idesp).get().then(async function(doc){
       
     }
   });
-  }
+  
 
 });
-//------------------------------------------------------------------------------------------
+//-------------------------------no-----------------------------------------------------------
 })
 
-app.listen (8080,()=>{
+
+
+app.get('/', (req,res)=>{
+
+  let data = new Date();
+  let diames = data.getDate().toString()
+  let diasemana = data.getDay() ;
+  res.json({data: diames,dias: diasemana})
+  
+  
+
+}
+
+
+)
+
+app.listen (port,()=>{
 
     console.log('Servidor Aberto 8080');
 })
